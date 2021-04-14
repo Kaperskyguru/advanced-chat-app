@@ -1,14 +1,12 @@
 const app = require("express")();
 const http = require("http").Server(app);
 const io = require("socket.io")(http);
-const path = require("path");
 const DataBase = require("./database.js");
 const db = new DataBase();
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });
 io.on("connection", function (socket) {
-  console.log(io.sockets.connected);
   console.log("A user with ID: " + socket.id + " connected");
 
   socket.on("disconnect", function () {
@@ -16,8 +14,9 @@ io.on("connection", function (socket) {
   });
 
   // More Socket listening here.
-  // if (io.sockets.connected) console.log(io.sockets.connected);
-  // socket.emit("connections", Object.keys(io.sockets.connected).length);
+  if (io.sockets.connected)
+    socket.emit("connections", Object.keys(io.sockets.connected).length);
+  else socket.emit("connections", 0);
 
   socket.on("chat-message", async (message) => {
     const data = {
@@ -25,8 +24,8 @@ io.on("connection", function (socket) {
       user_id: socket.id,
       name: message.user,
     };
-    console.log(data);
-    const messageData = await db.storeUserMessage(data);
+
+    await db.storeUserMessage(data);
     socket.broadcast.emit("chat-message", message);
   });
 
@@ -45,14 +44,15 @@ io.on("connection", function (socket) {
       user_id: socket.id,
     };
     const user = await db.addUser(data);
-    if (user === "User already exist") {
+    if (user) {
       messageData = await db.fetchUserMessages(data);
+      data.messages = messageData;
     }
-    // console.log(messageData);
-    socket.broadcast.emit("joined", messageData);
+    socket.broadcast.emit("joined", data);
   });
 
   socket.on("leave", (data) => {
+    // Delete user data here
     socket.broadcast.emit("leave", data);
   });
 });

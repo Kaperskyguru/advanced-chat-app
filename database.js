@@ -5,9 +5,9 @@ class DB {
   constructor() {
     db = mysql.createConnection({
       host: "localhost",
-      user: "root",
-      password: "Changeless11!",
-      database: "advanced-chat-app",
+      user: "YOUR_USERNAME",
+      password: "YOUR_PASSWORD",
+      database: "YOUR_DBNAME",
     });
     db.connect(function (err) {
       if (err) console.log(err);
@@ -17,7 +17,7 @@ class DB {
   addUser(data) {
     return new Promise(async (resolve, reject) => {
       if (await this.isUserExist(data)) {
-        resolve("User already exist");
+        resolve(true);
       } else
         db.execute(
           "INSERT INTO users (name, user_id) VALUES (?,?)",
